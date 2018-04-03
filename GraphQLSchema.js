@@ -69,6 +69,29 @@ const postsById = {
     },
 };
 
+Object.size = function(obj) {
+    var size = 1, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+let nextId = Object.size(usersById)
+
+const mutations = {
+  addUser: ({ name }) => {
+    const newUser = {
+      id: nextId,
+      name,
+    };
+    usersById[nextId] = newUser;
+    
+    nextId++;
+    
+    return new GraphQLUser(newUser);
+  }
+}
+
 exports.schema = buildSchema(`
   type User {
     id: ID!
@@ -88,6 +111,11 @@ exports.schema = buildSchema(`
     posts: [Post!]!
     user(id: ID!): User
   }
+
+  type Mutation {
+    addUser(name: String!): User
+    renameUser(id: Int!, name: String!): User
+  }
 `);
 
 exports.rootValue = {
@@ -100,4 +128,7 @@ exports.rootValue = {
     posts: () => Object.keys(postsById).map(
         id => new GraphQLPost(postsById[id])
     ),
+    addUser: (name) => Object.assign({}, mutations.addUser(name)),
+    // renameUser: (id, name) => Object.assign({}, mutations.renameUser(id, name)),
+    // removeUser: (id) => Object.assign({}, mutations.removeUser(id))
 };
