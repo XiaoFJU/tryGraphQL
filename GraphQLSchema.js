@@ -69,8 +69,9 @@ const postsById = {
     },
 };
 
-Object.size = function(obj) {
-    var size = 1, key;
+Object.size = function (obj) {
+    let size = 1;
+    let key;
     for (key in obj) {
         if (obj.hasOwnProperty(key)) size++;
     }
@@ -79,17 +80,29 @@ Object.size = function(obj) {
 let nextId = Object.size(usersById)
 
 const mutations = {
-  addUser: ({ name }) => {
-    const newUser = {
-      id: nextId,
-      name,
-    };
-    usersById[nextId] = newUser;
-    
-    nextId++;
-    
-    return new GraphQLUser(newUser);
-  }
+    addUser: ({name}) => {
+        const newUser = {
+            id: nextId,
+            name,
+        };
+        usersById[nextId] = newUser;
+
+        nextId++;
+
+        return new GraphQLUser(newUser);
+    },
+    renameUser: ({id,name}) => {
+        usersById[id].name = name;
+
+        return new GraphQLUser(usersById[id]);
+    },
+    removeUser: ({ id }) => {
+        delete usersById[id];
+
+        return {
+            deletedUserId: id,
+        };
+    },
 }
 
 exports.schema = buildSchema(`
@@ -112,9 +125,14 @@ exports.schema = buildSchema(`
     user(id: ID!): User
   }
 
+  type RemoveUserPayload {
+    deletedUserId: Int!
+  }
+
   type Mutation {
     addUser(name: String!): User
     renameUser(id: Int!, name: String!): User
+    removeUser(id: Int!): RemoveUserPayload
   }
 `);
 
@@ -129,6 +147,6 @@ exports.rootValue = {
         id => new GraphQLPost(postsById[id])
     ),
     addUser: (name) => Object.assign({}, mutations.addUser(name)),
-    // renameUser: (id, name) => Object.assign({}, mutations.renameUser(id, name)),
-    // removeUser: (id) => Object.assign({}, mutations.removeUser(id))
+    renameUser: (id, name) => Object.assign({}, mutations.renameUser(id, name)),
+    removeUser: (id) => Object.assign({}, mutations.removeUser(id))
 };
